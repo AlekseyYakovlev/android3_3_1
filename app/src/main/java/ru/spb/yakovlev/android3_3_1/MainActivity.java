@@ -21,68 +21,63 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 
-import io.reactivex.Observable;
-
 public class MainActivity extends AppCompatActivity {
 
     private ImageView imageView;
     private final int Pick_image = 1;
-    private View.OnClickListener onFabClickListener;
-    private View.OnLongClickListener onFabLongClickListener;
+
+
     private Bitmap bitmap = null;
 
+    private final View.OnClickListener onFabClickListener = view -> {
+        Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
+        photoPickerIntent.setType("image/*");
+        startActivityForResult(photoPickerIntent, Pick_image);
+    };
 
-    {
-        onFabClickListener = view -> {
-            Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
-            photoPickerIntent.setType("image/*");
-            startActivityForResult(photoPickerIntent, Pick_image);
-        };
+    private final View.OnLongClickListener onFabLongClickListener = view -> {
 
-        onFabLongClickListener = view -> {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            Log.d("********************", "Requesting permission");
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    1);
+        }
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                == PackageManager.PERMISSION_GRANTED && bitmap != null) {
 
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                    != PackageManager.PERMISSION_GRANTED) {
-                Log.d("********************", "Requesting permission");
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                        1);
-            }
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                    == PackageManager.PERMISSION_GRANTED && bitmap != null) {
+            File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+            File file = new File(path, "savedBitmap.png");
 
-                File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-                File file = new File(path, "savedBitmap.png");
-
+            try {
+                FileOutputStream fos = null;
                 try {
-                    FileOutputStream fos = null;
-                    try {
-                        fos = new FileOutputStream(file);
-                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
-                        Log.d("********************", file.getPath());
-                        fos.flush();
-                        Snackbar.make(view, file.getPath() + " successfully saved", Snackbar.LENGTH_LONG).show();
-                    } finally {
-                        if (fos != null) fos.close();
-                    }
-                } catch (Exception e) {
-                    Log.e("********************", e.toString());
+                    fos = new FileOutputStream(file);
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
+                    Log.d("********************", file.getPath());
+                    fos.flush();
+                    Snackbar.make(view, file.getPath() + " successfully saved", Snackbar.LENGTH_LONG).show();
+                } finally {
+                    if (fos != null) fos.close();
                 }
-                Log.d("********************", "SUCCESS");
-
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                        1);
-
-            } else {
-                if (bitmap == null)
-                    Snackbar.make(view, "No image to save", Snackbar.LENGTH_LONG).show();
-                else Snackbar.make(view, "Permission required", Snackbar.LENGTH_LONG).show();
-
+            } catch (Exception e) {
+                Log.e("********************", e.toString());
             }
+            Log.d("********************", "SUCCESS");
 
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    1);
 
-            return true;
-        };
-    }
+        } else {
+            if (bitmap == null)
+                Snackbar.make(view, "No image to save", Snackbar.LENGTH_LONG).show();
+            else Snackbar.make(view, "Permission required", Snackbar.LENGTH_LONG).show();
+
+        }
+
+        return true;
+    };
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
